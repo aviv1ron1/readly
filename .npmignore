@@ -5,3 +5,4 @@ Makefile
 *.sublime-*
 
 test.js
+test.txt

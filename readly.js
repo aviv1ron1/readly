@@ -38,6 +38,9 @@ Readly.prototype.read = function(start, count) {
     });
     var linesSent = 0;
     var lastLine;
+    if (!start) {
+        start = 0;
+    }
     var finish = function() {
         self.stream.destroy();
         self.emit("end");
