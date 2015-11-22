@@ -1,6 +1,6 @@
 {
     "name": "readly",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "description": "read files line by line",
     "repository": {
         "type": "git",
