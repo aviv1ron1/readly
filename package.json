@@ -1,0 +1,21 @@
+{
+    "name": "readly",
+    "version": "0.0.1",
+    "description": "read files line by line",
+    "repository": {
+        "type": "git",
+        "url": "git://github.com/aviv1ron1/node-line-reader.git"
+    },
+    "author": {
+        "name": "Aviv Ron",
+        "email": "aviv1ron1@gmail.com"
+    },
+    "keywords": [
+        "line",
+        "lines",
+        "split",
+        "file",
+        "read"
+    ],
+    "license": "MIT"
+}
