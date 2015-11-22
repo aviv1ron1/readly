@@ -1,5 +1,7 @@
 #Readly
 
+[![npm package](https://nodei.co/npm/readly.png?downloads=true&downloadRank=true&stars=true)](https://nodei.co/npm/readly/)
+
 nodejs module for reading files line by line
 
 Readly streams the file and fires events when each line is ready
