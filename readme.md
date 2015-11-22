@@ -14,7 +14,7 @@ var Readly = require("readly");
 Constructor receives:
 * filename - path to file
 * encoding - optional, default is utf8.
-* eol - optional, default is OS newline char character. This can set the character to split the file by.
+* eol - optional, default is OS newline character. This can set the character to split the file by.
 The constrcutor throws an error if filename is not a file or does not exist
 ```javascript
 var reader = new Readly("filename.txt")
