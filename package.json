@@ -4,7 +4,7 @@
     "description": "read files line by line",
     "repository": {
         "type": "git",
-        "url": "git://github.com/aviv1ron1/node-line-reader.git"
+        "url": "git://github.com/aviv1ron1/readly.git"
     },
     "author": {
         "name": "Aviv Ron",
@@ -17,5 +17,6 @@
         "file",
         "read"
     ],
+    "main": "readly.js",
     "license": "MIT"
 }
