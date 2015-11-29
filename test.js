@@ -1,6 +1,7 @@
 var Readly = require("./readly.js");
-
+var fs = require('fs');
 var reader = new Readly("test.txt");
+var strm;
 
 console.log("read all:")
 
@@ -9,7 +10,13 @@ reader.on('line', function(line) {
 });
 
 var c3 = function() {
-    console.log("_________________");
+    console.log("_________________ now with stream instead of filename");
+    strm = fs.createReadStream('test.txt');
+    reader = new Readly(strm);
+    reader.on('line', function(line) {
+        console.log(line);
+    });
+    reader.readAll();
 }
 
 var c2 = function() {

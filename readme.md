@@ -2,7 +2,7 @@
 
 [![npm package](https://nodei.co/npm/readly.png?downloads=true&downloadRank=true&stars=true)](https://nodei.co/npm/readly/)
 
-nodejs module for reading files line by line
+nodejs module for reading files or streams line by line
 
 Readly streams the file and fires events when each line is ready
 
@@ -14,10 +14,10 @@ var Readly = require("readly");
 ```
 
 Constructor receives:
-* filename - path to file
+* filename - path to a file or a stream
 * encoding - optional, default is utf8.
 * eol - optional, default is OS newline character. This can set the character to split the file by.
-The constrcutor throws an error if filename is not a file or does not exist
+The constrcutor throws an error if filename is a string but the file does not exist
 ```javascript
 var reader = new Readly("filename.txt")
 ```
@@ -59,7 +59,30 @@ example:
 
 `reader.read(10,20)` skips the first 10 lines of the file and reads not more than the next 20 lines
 
+### example skipping 3 lines and then reading 4 lines from a file
+```javascript
+var Readly = require("readly");
+var reader = new Readly("filename.txt");
+reader.on('line', function(line) {
+	console.log(line);
+});
 
-
-
-
+reader.on('end', function() {
+	console.log("done");
+});
+reader.read(3, 4);
+```
+### example reading all lines from a stream
+```javascript
+var Readly = require("readly");
+var fs = require('fs');
+var myStream = fs.createReadStream('filename.txt'); //create a stream from any kind of source
+var reader = new Readly(myStream);
+reader.on('line', function(line) {
+	console.log(line);
+});
+reader.on('end', function() {
+	console.log("done");
+});
+reader.readAll();
+```

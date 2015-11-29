@@ -3,15 +3,6 @@ var util = require("util");
 var EventEmitter = require("events").EventEmitter;
 
 function Readly(filename, encoding, eol) {
-    try {
-        stats = fs.lstatSync(filename);
-        if (!stats.isFile()) {
-            throw new Error("filename is a directory name, not a file. " + filename);
-        }
-    } catch (e) {
-        throw new Error("file does not exist " + filename);
-    }
-    EventEmitter.call(this);
     if (encoding) {
         this.encoding = encoding;
     } else {
@@ -22,27 +13,45 @@ function Readly(filename, encoding, eol) {
     } else {
         this.eol = require('os').EOL;
     }
-    this.filename = filename;
+    if (typeof filename === "string") {
+        try {
+            stats = fs.lstatSync(filename);
+            if (!stats.isFile()) {
+                throw new Error("filename is a directory name, not a file. " + filename);
+            }
+            this.filename = filename;
+        } catch (e) {
+            throw new Error("file does not exist " + filename);
+        }
+    } else {
+        this.stream = filename;
+        this.stream.setEncoding(this.encoding);
+    }
+    EventEmitter.call(this);
 }
 
 util.inherits(Readly, EventEmitter);
 
 Readly.prototype.read = function(start, count) {
     var self = this;
-    this.stream = fs.createReadStream(self.filename, {
-        flags: 'r',
-        encoding: self.encoding,
-        fd: null,
-        mode: 0666,
-        bufferSize: 64 * 1024
-    });
+    if (this.filename) {
+        this.stream = fs.createReadStream(self.filename, {
+            flags: 'r',
+            encoding: self.encoding,
+            fd: null,
+            mode: 0666,
+            bufferSize: 64 * 1024
+        });
+    }
     var linesSent = 0;
     var lastLine;
     if (!start) {
         start = 0;
     }
     var finish = function() {
-        self.stream.destroy();
+        if (self.filename) {
+            self.stream.destroy();
+        }
         self.emit("end");
     }
     self.stream.on('data', function(data) {
