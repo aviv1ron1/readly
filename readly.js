@@ -1,8 +1,11 @@
 var fs = require('fs');
 var util = require("util");
 var EventEmitter = require("events").EventEmitter;
+var stream = require('stream');
+var Transform = stream.Transform;
 
-function Readly(filename, encoding, eol) {
+
+function ReadlyEvent(filename, encoding, eol) {
     if (encoding) {
         this.encoding = encoding;
     } else {
@@ -28,11 +31,88 @@ function Readly(filename, encoding, eol) {
         this.stream.setEncoding(this.encoding);
     }
     EventEmitter.call(this);
+    this.linesSent = 0;
+    this.lastLine;
+    this.start;
+    this.count;
 }
 
-util.inherits(Readly, EventEmitter);
+util.inherits(ReadlyEvent, EventEmitter);
+util.inherits(ReadlyTransform, Transform);
 
-Readly.prototype.read = function(start, count) {
+function ReadlyTransform(opts) {
+    Transform.call(this, opts);
+    if (opts && opts.encoding) {
+        this.encoding = opts.encoding;
+    } else {
+        this.encoding = 'utf-8'
+    }
+    if (opts && opts.eol) {
+        this.eol = opts.eol;
+    } else {
+        this.eol = require('os').EOL;
+    }
+    this.lastLine;
+    this.start = 0;
+    this.count;
+    this.linesSent = 0;
+}
+
+
+
+function handle(self, data, callback, finish) {
+    if (typeof data !== "string") {
+        data = data.toString();
+    }
+    var currLines = data.split(self.eol);
+    if (self.lastLine) {
+        data = self.lastLine + data;
+    }
+    var l = data.split(self.eol)
+    self.lastLine = l.pop();
+    if (self.lastLine.indexOf(self.eol) > -1) {
+        l.push(self.lastLine);
+        self.lastLine = null;
+    }
+    while (self.start && self.start > 0 && l.length > 0) {
+        l.shift();
+        self.start--;
+    }
+    if (self.count) {
+        while (l.length > 0 && self.linesSent < self.count) {
+            self.linesSent++;
+            callback(l.shift());
+        }
+    } else {
+        while (l.length > 0) {
+            callback(l.shift(), l.length);
+        }
+    }
+    if (self.count && self.linesSent >= self.count) {
+        if (finish) {
+            finish();
+        }
+    }
+}
+
+ReadlyTransform.prototype._transform = function(chunk, enc, callback) {
+    var self = this;
+    handle(this, chunk, function(line, left) {
+        self.push(line);
+        if (!left) {
+            callback();
+        }
+    });
+};
+
+ReadlyTransform.prototype._flush = function(callback) {
+    if (this.lastLine) {
+        this.push(this.lastLine);
+        callback();
+    }
+}
+
+ReadlyEvent.prototype.read = function(start, count) {
     var self = this;
     if (this.filename) {
         this.stream = fs.createReadStream(self.filename, {
@@ -43,60 +123,43 @@ Readly.prototype.read = function(start, count) {
             bufferSize: 64 * 1024
         });
     }
-    var linesSent = 0;
-    var lastLine;
     if (!start) {
         start = 0;
     }
+    self.start = start;
+    self.count = count;
     var finish = function() {
         if (self.filename) {
             self.stream.destroy();
         }
+        self.linesSent = 0;
+        self.start = undefined;
+        self.count = undefined;
+        self.lastLine = undefined;
         self.emit("end");
     }
     self.stream.on('data', function(data) {
-        var currLines = data.split(self.eol);
-        if (lastLine) {
-            data = lastLine + data;
-        }
-        var l = data.split(self.eol)
-        lastLine = l.pop();
-        if (lastLine.indexOf(self.eol) > -1) {
-            l.push(lastLine);
-            lastLine = null;
-        }
-        while (start && start > 0 && l.length > 0) {
-            l.shift();
-            start--;
-        }
-        if (count) {
-            while (l.length > 0 && linesSent < count) {
-                linesSent++;
-                self.emit("line", l.shift());
-            }
-        } else {
-            while (l.length > 0) {
-                self.emit("line", l.shift());
-            }
-        }
-        if (count && linesSent >= count) {
-            finish();
-        }
+        handle(self, data, function(line) {
+            self.emit("line", line);
+        }, finish);
     });
     self.stream.on('end', function() {
-        if (lastLine && start < 1) {
-            self.emit("line", lastLine);
+        if (self.lastLine && self.start < 1) {
+            self.emit("line", self.lastLine);
         }
         finish();
     });
 }
 
-Readly.prototype.readAll = function() {
+ReadlyEvent.prototype.readAll = function() {
     this.read();
 }
 
-Readly.prototype.readFirst = function(count) {
+ReadlyEvent.prototype.readFirst = function(count) {
     this.read(0, count);
 }
 
-module.exports = Readly;
+module.exports = {
+    Emitter: ReadlyEvent,
+    Transform: ReadlyTransform
+}

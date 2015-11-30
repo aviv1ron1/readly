@@ -4,7 +4,9 @@
 
 nodejs module for reading files or streams line by line
 
-Readly streams the file and fires events when each line is ready
+Readly can be used in two ways
+Emitter: Readly streams the file and fires events when each line is ready
+Transform: as a transform stream - pipe from and to another stream
 
 ## usage
 
@@ -13,13 +15,15 @@ Use `require("readly");`
 var Readly = require("readly");
 ```
 
+## Emitter
+
 Constructor receives:
 * filename - path to a file or a stream
 * encoding - optional, default is utf8.
 * eol - optional, default is OS newline character. This can set the character to split the file by.
 The constrcutor throws an error if filename is a string but the file does not exist
 ```javascript
-var reader = new Readly("filename.txt")
+var reader = new Readly.Emitter("filename.txt")
 ```
 
 Readly publishes two events: 
@@ -62,7 +66,7 @@ example:
 ### example skipping 3 lines and then reading 4 lines from a file
 ```javascript
 var Readly = require("readly");
-var reader = new Readly("filename.txt");
+var reader = new Readly.Emitter("filename.txt");
 reader.on('line', function(line) {
 	console.log(line);
 });
@@ -77,7 +81,7 @@ reader.read(3, 4);
 var Readly = require("readly");
 var fs = require('fs');
 var myStream = fs.createReadStream('filename.txt'); //create a stream from any kind of source
-var reader = new Readly(myStream);
+var reader = new Readly.Emitter(myStream);
 reader.on('line', function(line) {
 	console.log(line);
 });
@@ -85,4 +89,15 @@ reader.on('end', function() {
 	console.log("done");
 });
 reader.readAll();
+```
+
+## example as a transform stream
+
+constructor receives an object options with the same options as the Emitter (encoding, eol)
+```javascript
+var Readly = require("readly");
+var reader = new Readly.Transform({ encoding: 'utf8', eol: '-'});
+var myStream = fs.createReadStream('filename.txt'); //create a stream from any kind of source
+var someOutputStream = new SomeOutputStream() //any write or transform stream
+myStream.pipe(reader).pipe(someOutputStream);
 ```

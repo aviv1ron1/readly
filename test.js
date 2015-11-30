@@ -1,6 +1,6 @@
 var Readly = require("./readly.js");
 var fs = require('fs');
-var reader = new Readly("test.txt");
+var reader = new Readly.Emitter("test.txt");
 var strm;
 
 console.log("read all:")
@@ -11,10 +11,19 @@ reader.on('line', function(line) {
 
 var c3 = function() {
     console.log("_________________ now with stream instead of filename");
-    strm = fs.createReadStream('test.txt');
-    reader = new Readly(strm);
+    strm = fs.createReadStream('test.txt', {
+        encoding: 'utf8'
+    });
+    reader = new Readly.Emitter(strm);
     reader.on('line', function(line) {
         console.log(line);
+    });
+    reader.on('end', function() {
+        console.log('____________________________ now as transform string');
+        strm = fs.createReadStream('test.txt');
+        var lineStream = new Readly.Transform();
+        lineStream.pipe(process.stdout);
+        strm.pipe(lineStream);
     });
     reader.readAll();
 }
