@@ -78,15 +78,19 @@ function handle(self, data, callback, finish) {
         l.shift();
         self.start--;
     }
-    if (self.count) {
-        while (l.length > 0 && self.linesSent < self.count) {
-            self.linesSent++;
-            callback(l.shift());
+    if (l.length) {
+        if (self.count) {
+            while (l.length > 0 && self.linesSent < self.count) {
+                self.linesSent++;
+                callback(l.shift(), l.length);
+            }
+        } else {
+            while (l.length > 0) {
+                callback(l.shift(), l.length);
+            }
         }
     } else {
-        while (l.length > 0) {
-            callback(l.shift(), l.length);
-        }
+        callback(null, 0);
     }
     if (self.count && self.linesSent >= self.count) {
         if (finish) {
@@ -98,7 +102,9 @@ function handle(self, data, callback, finish) {
 ReadlyTransform.prototype._transform = function(chunk, enc, callback) {
     var self = this;
     handle(this, chunk, function(line, left) {
-        self.push(line);
+        if (line) {
+            self.push(line);
+        }
         if (!left) {
             callback();
         }
@@ -140,7 +146,9 @@ ReadlyEvent.prototype.read = function(start, count) {
     }
     self.stream.on('data', function(data) {
         handle(self, data, function(line) {
-            self.emit("line", line);
+            if (line) {
+                self.emit("line", line);
+            }
         }, finish);
     });
     self.stream.on('end', function() {
