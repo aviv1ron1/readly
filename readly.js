@@ -114,8 +114,8 @@ ReadlyTransform.prototype._transform = function(chunk, enc, callback) {
 ReadlyTransform.prototype._flush = function(callback) {
     if (this.lastLine) {
         this.push(this.lastLine);
-        callback();
     }
+    callback();
 }
 
 ReadlyEvent.prototype.read = function(start, count) {
